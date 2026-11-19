@@ -37,7 +37,7 @@ I propose persistence for a deployment decision led by typical absolute error. O
 
 ## Attribution
 
-qwen3.5:9b via Ollama, built as bikeshare-coder with 65,536 context tokens, was used for the local Claude Code workflows. GPT-6 via Codex additionally implemented and verified this submission draft. These roles are disclosed separately. The original starter pipeline and its five decision lines come from the course.
+qwen3.5:9b via Ollama, built as bikeshare-coder with 65,536 context tokens, was used throughout the local Claude Code workflows. GPT-6 via Codex additionally implemented and verified this submission draft. The local model size stayed fixed. The original starter pipeline and its five decision lines come from the course.
 
 Agent work includes the new feature and tests, raw-data checks, comparison and transformation code, controlled fault scripts and captured outputs, the new seed-fault skill, setup corrections, and this report draft. Codex implemented these components. Local Qwen reviewed the test-first commits through `/new-feature`, ran checks, and wrote an initial decision entry. Codex corrected its date and its unsupported description of the 0.01 threshold as a noise band. Fault evidence distinguishes explicit hook replays from live Claude Code feedback and reports actual repair methods.
 
@@ -49,4 +49,4 @@ The methodological decisions proposed for student review are documented with dat
 - Interpret the residual-target transformation as a rolling one-day formulation and evaluate it separately.
 - Prefer persistence under an MAE-led deployment cost, pending the student’s operational judgment.
 
-These are Codex proposals pending student review, rather than claims that the student independently made them. The teammate audit and final self-audit status must be checked in docs/AUDIT.md and reports/audit.jsonl before submission. The report will be updated with the actual audit findings and the student’s confirmed decisions.
+These are Codex proposals pending student review, rather than claims that the student independently made them. The real Agent SDK self-audit in reports/audit.jsonl reports leakage none, temporal validity true, baselines present, reproducibility true, and an empty findings list with high confidence. Its session called the identity tool on the actual selected features, ran make test, and ran make all. Codex independently verified a fresh checkout and exact metrics equality. The screening audit supports those mechanical checks; operational weather availability and the deployment loss still require the student’s judgment. The teammate audit remains pending a Methodology 7 bikeshare repository URL in docs/AUDIT.md. The initial URL supplied points to an earlier lecture-notebook repository. The report’s proposed decisions require the student’s review before submission.
