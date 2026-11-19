@@ -49,7 +49,8 @@ from claude_agent_sdk import (
     {"csv_path": str, "target": str, "candidates": list},
 )
 async def check_identity(args: dict[str, Any]) -> dict[str, Any]:
-    df = pd.read_csv(args["csv_path"])
+    path = Path(args["csv_path"])
+    df = pd.read_parquet(path) if path.suffix == ".parquet" else pd.read_csv(path)
     target = df[args["target"]].to_numpy(dtype=float)
     cols = [c for c in args["candidates"] if c in df.columns and c != args["target"]]
 
@@ -105,6 +106,14 @@ Check exactly four things:
 
 Verify by reading files and running code. Do not accept a docstring or a
 README claim as evidence.
+
+Start with src/config.py, src/features.py, src/train.py, Makefile,
+requirements.txt, and reports/metrics.json. Skip .venv, .git, and caches.
+For check_identity, use only the actual model inputs returned by
+feature_columns(), together with the target. Raw columns retained in the
+processed table can be excluded from the model. The tool accepts CSV or
+Parquet files through its csv_path argument. Run make test and make all,
+compare regenerated metrics, and finish once the four checks are verified.
 
 Your final answer is a single JSON object matching the schema you were
 given. No prose around it.
