@@ -4,8 +4,8 @@ Reference repository for the DSC 180A methodology lesson on agentic
 programming. Forecasts daily Capital Bikeshare ridership (`cnt`) for
 Washington, DC, 2011-2012, with a leakage trap in the data.
 
-The teammate audit is pending a repository URL. Review the proposed
-methodological decisions in REPORT.md and docs/DECISIONS.md before submission.
+The teammate audit is recorded in docs/AUDIT.md. Review its proposed verdict
+and the methodological decisions in REPORT.md and docs/DECISIONS.md before submission.
 
 The agent is Claude Code driving an **open-weight model running on your own
 machine** through Ollama. No Anthropic account, subscription, or API key is
