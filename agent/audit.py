@@ -114,6 +114,9 @@ feature_columns(), together with the target. Raw columns retained in the
 processed table can be excluded from the model. The tool accepts CSV or
 Parquet files through its csv_path argument. Run make test and make all,
 compare regenerated metrics, and finish once the four checks are verified.
+For repository Python imports, use python -c from the repository root.
+Keep the project directory on sys.path. Call mcp__audit__check_identity
+directly as an MCP tool, with csv_path, target, and candidates arguments.
 
 Your final answer is a single JSON object matching the schema you were
 given. No prose around it.
@@ -176,7 +179,19 @@ async def audit_repo(repo: Path) -> dict[str, Any]:
     # intermediate TextBlock ("Let me look at config.py first...") and
     # json.loads-ing the lot fails on the first repo that thinks out loud.
     final: ResultMessage | None = None
-    async for message in query(prompt=f"Audit the repo at {repo}.", options=options):
+    metrics_path = repo / "reports" / "metrics.json"
+    feature_hint = ""
+    if metrics_path.exists():
+        committed = json.loads(metrics_path.read_text())
+        feature_hint = (
+            "The committed metrics list these model inputs. Verify them against "
+            f"src/features.py: {json.dumps(committed.get('features', []))}. "
+            "Call mcp__audit__check_identity directly on "
+            f"{repo / 'data/processed/features.parquet'} with target cnt and "
+            "those candidate columns. Then verify tests and reproducibility. "
+            "Finish with the required structured output after the four checks."
+        )
+    async for message in query(prompt=f"Audit the repo at {repo}. {feature_hint}", options=options):
         if isinstance(message, ResultMessage):
             final = message
 
