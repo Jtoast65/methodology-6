@@ -348,3 +348,40 @@ Repaired by restoring the original expression. One restoration, zero Claude turn
 ..........                                                               [100%]
 10 passed in 0.82s
 ```
+
+
+## 4. Bash copy into raw data
+
+Ran cp from a saved CSV plus one newline into data/raw/bike_daily.csv. The Edit|Write matcher excludes Bash, so Claude would not invoke the hook. An explicit Bash-payload replay also exits 0 with empty stdout/stderr.
+
+
+```text
+cp exit 0
+hook replay exit 0
+hook stdout/stderr: <empty>
+```
+
+The implemented SHA-256 check in load_raw makes make data detect this change. It detects a byte change even though the extra newline would leave parsed values unchanged. The original file is restored immediately after the demonstration.
+
+
+```text
+python -m src.ingest
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/joeysandoval/Documents/Codex/2026-11-16/https-dsc-capstone-org-2026-27/outputs/bikeshare-open/src/ingest.py", line 39, in <module>
+    df = load_raw()
+  File "/Users/joeysandoval/Documents/Codex/2026-11-16/https-dsc-capstone-org-2026-27/outputs/bikeshare-open/src/ingest.py", line 27, in load_raw
+    raise ValueError(f"raw data hash mismatch: {actual_hash}; expected {RAW_SHA256}")
+ValueError: raw data hash mismatch: 8b19181406f2d6599f3cb5bd73ce3e81b5883599ca00badcfdb2f7e17c9dded7; expected a6bed1577f6e4de56dcfae6d8315985073cc0ad3446c8c99ed60c86a0b5ad9dc
+make: *** [data] Error 1
+```
+
+Restored exact original raw bytes and reran the suite.
+
+
+```text
+python -m pytest tests/ -q
+..................                                                       [100%]
+18 passed in 2.65s
+```
