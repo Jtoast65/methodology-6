@@ -291,3 +291,60 @@ Repaired by restoring the original expression. One restoration, zero Claude turn
 ..........                                                               [100%]
 10 passed in 0.74s
 ```
+
+
+## 3. Weather encoder silently accepts an unknown label
+
+Exact replacement
+
+
+```text
+-     if unknown:
+        raise ValueError(f"unmapped weather labels: {sorted(unknown)}")
+
++
+```
+
+Real test output, exit 1
+
+
+```text
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________________ test_unknown_weather_labels_raise _______________________
+tests/test_leakage.py:70: in test_unknown_weather_labels_raise
+    with pytest.raises(ValueError, match="unmapped weather labels"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+=========================== short test summary info ============================
+FAILED tests/test_leakage.py::test_unknown_weather_labels_raise - Failed: DID...
+1 failed in 0.59s
+```
+
+PostToolUse payload replay, exit 2. The following is hook stderr.
+
+
+```text
+Leakage tests failed after editing /Users/joeysandoval/Documents/Codex/2026-11-16/https-dsc-capstone-org-2026-27/outputs/bikeshare-open/src/features.py:
+.......F..                                                               [100%]
+=================================== FAILURES ===================================
+______________________ test_unknown_weather_labels_raise _______________________
+
+    def test_unknown_weather_labels_raise():
+>       with pytest.raises(ValueError, match="unmapped weather labels"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_leakage.py:70: Failed
+=========================== short test summary info ============================
+FAILED tests/test_leakage.py::test_unknown_weather_labels_raise - Failed: DID...
+1 failed, 9 passed in 0.78s
+```
+
+Repaired by restoring the original expression. One restoration, zero Claude turns.
+
+
+```text
+..........                                                               [100%]
+10 passed in 0.82s
+```
