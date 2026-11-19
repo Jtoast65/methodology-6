@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from src.config import FORBIDDEN, TARGET
-from src.features import build_features, feature_columns
+from src.features import build_features, encode_weather, feature_columns
 from src.ingest import load_raw
 
 
@@ -64,3 +64,24 @@ def test_no_missing_values(feats):
 def test_dates_are_sorted_and_unique(feats):
     assert feats.dteday.is_monotonic_increasing
     assert feats.dteday.is_unique
+
+
+def test_unknown_weather_labels_raise():
+    with pytest.raises(ValueError, match="unmapped weather labels"):
+        encode_weather(pd.Series(["GOOD", "MISTY", "BAD", "UNSEEN"]))
+
+
+def test_model_features_do_not_restate_target(feats):
+    """Catch renamed target copies and arithmetic aliases in the model inputs."""
+    from itertools import combinations
+    import numpy as np
+
+    columns = feature_columns(feats)
+    target = feats[TARGET].to_numpy(dtype=float)
+    for size in (1, 2, 3):
+        for subset in combinations(columns, size):
+            matrix = np.column_stack([feats[list(subset)].to_numpy(dtype=float),
+                                      np.ones(len(feats))])
+            coefficients, *_ = np.linalg.lstsq(matrix, target, rcond=None)
+            residual = np.max(np.abs(matrix @ coefficients - target))
+            assert residual >= 1e-6, f"target restated by model features: {subset}"
