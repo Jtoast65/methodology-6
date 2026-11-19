@@ -226,3 +226,68 @@ Repaired by restoring the original expression. One restoration, zero Claude turn
 ..........                                                               [100%]
 10 passed in 0.77s
 ```
+
+
+## 2. Rolling mean includes the current target
+
+Exact replacement
+
+
+```text
+- out[TARGET].shift(1).rolling(LAG_WARMUP).mean()
++ out[TARGET].rolling(LAG_WARMUP).mean()
+```
+
+Real test output, exit 1
+
+
+```text
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________________ test_rolling_mean_excludes_today _______________________
+tests/test_leakage.py:57: in test_rolling_mean_excludes_today
+    assert feats.set_index("dteday").cnt_roll_7[date] == pytest.approx(expected)
+E   assert np.float64(4389.0) == 4414.857142857143 ± 0.00441486
+E     
+E     comparison failed
+E     Obtained: 4389.0
+E     Expected: 4414.857142857143 ± 0.00441486
+=========================== short test summary info ============================
+FAILED tests/test_leakage.py::test_rolling_mean_excludes_today - assert np.fl...
+1 failed in 0.60s
+```
+
+PostToolUse payload replay, exit 2. The following is hook stderr.
+
+
+```text
+Leakage tests failed after editing /Users/joeysandoval/Documents/Codex/2026-11-16/https-dsc-capstone-org-2026-27/outputs/bikeshare-open/src/features.py:
+[714 rows x 29 columns]
+
+    def test_rolling_mean_excludes_today(feats):
+        """cnt_roll_7 must be the mean of the 7 calendar days *before* today."""
+        by_date = feats.set_index("dteday")[TARGET]
+        date = feats.dteday.iloc[200]
+        window = [date - pd.Timedelta(days=k) for k in range(1, 8)]
+        if all(d in by_date.index for d in window):
+            expected = sum(by_date[d] for d in window) / 7
+>           assert feats.set_index("dteday").cnt_roll_7[date] == pytest.approx(expected)
+E           assert np.float64(4389.0) == 4414.857142857143 ± 0.00441486
+E             
+E             comparison failed
+E             Obtained: 4389.0
+E             Expected: 4414.857142857143 ± 0.00441486
+
+tests/test_leakage.py:57: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_leakage.py::test_rolling_mean_excludes_today - assert np.fl...
+1 failed, 9 passed in 0.79s
+```
+
+Repaired by restoring the original expression. One restoration, zero Claude turns.
+
+
+```text
+..........                                                               [100%]
+10 passed in 0.74s
+```
