@@ -71,6 +71,21 @@ def test_unknown_weather_labels_raise():
         encode_weather(pd.Series(["GOOD", "MISTY", "BAD", "UNSEEN"]))
 
 
+def test_yesterdays_temperature_demand_interaction(feats):
+    raw = load_raw().set_index("dteday")
+    date = pd.Timestamp("2011-06-15")
+    yesterday = pd.Timestamp("2011-06-14")
+    expected = raw.loc[yesterday, "temp"] * raw.loc[yesterday, TARGET]
+    actual = feats.set_index("dteday").loc[date, "temp_demand_lag_1"]
+    assert actual == pytest.approx(expected)
+
+    # Same-day input changes must not change the feature for that day.
+    changed = load_raw()
+    changed.loc[changed.dteday == date, ["temp", TARGET]] = 999999
+    rebuilt = build_features(changed).set_index("dteday")
+    assert rebuilt.loc[date, "temp_demand_lag_1"] == pytest.approx(expected)
+
+
 def test_model_features_do_not_restate_target(feats):
     """Catch renamed target copies and arithmetic aliases in the model inputs."""
     from itertools import combinations
