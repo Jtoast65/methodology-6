@@ -10,7 +10,7 @@ Run: python -m src.features
 import numpy as np
 import pandas as pd
 
-from src.config import FORBIDDEN, LAG_WARMUP, PROCESSED, TARGET
+from src.config import EXPERIMENTAL_FEATURES, FORBIDDEN, LAG_WARMUP, PROCESSED, TARGET
 from src.ingest import load_raw
 
 WEATHER_ORDER = {"GOOD": 0, "MISTY": 1, "BAD": 2}
@@ -74,14 +74,17 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     out["cnt_lag_1"] = out[TARGET].shift(1)
     out["cnt_lag_7"] = out[TARGET].shift(LAG_WARMUP)
     out["cnt_roll_7"] = out[TARGET].shift(1).rolling(LAG_WARMUP).mean()
+    # Both inputs come from yesterday, after restoring the daily calendar.
+    out["temp_demand_lag_1"] = (out.temp * out[TARGET]).shift(1)
 
     return out.dropna().reset_index(drop=True)
 
 
-def feature_columns(df: pd.DataFrame) -> list[str]:
+def feature_columns(df: pd.DataFrame, *, include_experimental: bool = False) -> list[str]:
     """Numeric columns that are safe to feed the model."""
     numeric = df.select_dtypes(include="number").columns
-    return [c for c in numeric if c not in FORBIDDEN]
+    excluded = FORBIDDEN if include_experimental else FORBIDDEN | EXPERIMENTAL_FEATURES
+    return [c for c in numeric if c not in excluded]
 
 
 if __name__ == "__main__":
