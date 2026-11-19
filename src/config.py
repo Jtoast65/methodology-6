@@ -45,6 +45,14 @@ UNVERIFIED_COLS = {"cnt_2d_bfr"}
 # What feature_columns() and the tests actually enforce.
 FORBIDDEN = LEAKAGE_COLS | TIME_INDEX_COLS | UNVERIFIED_COLS
 
+# Every raw column needs an explicit role, including labels encoded downstream.
+RAW_FEATURE_COLS = {
+    "season", "mnth", "holiday", "weekday", "temp", "atemp",
+    "hum", "windspeed", "workday", "weather",
+}
+RAW_METADATA_COLS = {"dteday"}
+RAW_SHA256 = "a6bed1577f6e4de56dcfae6d8315985073cc0ad3446c8c99ed60c86a0b5ad9dc"
+
 # Temporal split: train on 2011, validate on H1 2012, test on H2 2012.
 TRAIN_END = "2011-12-31"
 VALID_END = "2012-06-30"

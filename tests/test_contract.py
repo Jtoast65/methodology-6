@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from sklearn.metrics import r2_score
 
-from src.config import LAG_WARMUP, TARGET
+from src.config import FORBIDDEN, LAG_WARMUP, RAW_FEATURE_COLS, RAW_METADATA_COLS, TARGET
 from src.features import build_features, feature_columns, reindex_to_calendar
 from src.ingest import load_raw
 from src.train import MODELS, temporal_split
@@ -17,6 +17,12 @@ def raw():
 @pytest.fixture(scope="module")
 def feats(raw):
     return build_features(raw)
+
+
+def test_every_raw_column_has_an_explicit_role(raw):
+    classified = FORBIDDEN | RAW_FEATURE_COLS | RAW_METADATA_COLS
+    unknown = set(raw.columns) - classified
+    assert not unknown, f"unclassified raw columns: {sorted(unknown)}"
 
 
 def test_calendar_is_complete_before_lagging(raw):
@@ -46,10 +52,10 @@ def test_only_expected_rows_are_dropped(raw, feats):
 def test_beats_the_mean_baseline(feats):
     """A model that cannot beat predicting the training mean is not a result."""
     cols = feature_columns(feats)
-    train, _, test = temporal_split(feats)
+    train, valid, _ = temporal_split(feats)
     ridge = MODELS["ridge"]
     ridge.fit(train[cols], train[TARGET])
-    assert r2_score(test[TARGET], ridge.predict(test[cols])) > 0.4
+    assert r2_score(valid[TARGET], ridge.predict(valid[cols])) > 0.4
 
 
 def test_persistence_baseline_is_reported():
