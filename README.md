@@ -17,12 +17,13 @@ needed. Nothing leaves your laptop.
     curl -fsSL https://claude.ai/install.sh | bash
 
     # 3. This repo
+    # Python 3.12+ is required by the pinned NumPy; verified with 3.13.1.
     python3 -m venv .venv && source .venv/bin/activate
     pip install -r requirements.txt
     make model          # pulls the base model, builds `bikeshare-coder` with a 64k context
     make check-model    # confirms Claude Code can reach it and that tool calls work
     make all            # data -> features -> train, writes reports/metrics.json
-    make test           # 14 tests
+    make test
 
     # 4. Start the agent, from the repo root
     claude
@@ -89,3 +90,24 @@ skill the lesson builds in Steps 7-8. `model/` holds the Modelfile and the
 readiness check. `agent/audit.py` is the Agent SDK batch auditor from Part 4;
 it uses the same local endpoint (`AUDIT_MODEL` overrides the model). Record
 methodological decisions in `docs/DECISIONS.md`.
+
+## Assignment extensions
+
+The proposed `temp_demand_lag_1` feature multiplies yesterday's temperature
+and demand, on the complete daily calendar. Its named-date test was committed
+before implementation. It reduced ridge validation R², so
+`EXPERIMENTAL_FEATURES` excludes it from the final model.
+`reports/metrics.json` retains the usual top-level final-model results and
+adds `feature_comparison.before` and `feature_comparison.after` for the
+required eight-row comparison. The primary selection metric was ridge
+validation R², with an improvement threshold of 0.01.
+
+`make all` also writes `reports/target-transformation.json`. The separate
+`python -m src.train --target-change` command trains a tree on
+`cnt - cnt_lag_1` and adds yesterday's count back to each prediction.
+The main metrics file always describes the untransformed target.
+
+`make data` verifies the raw CSV's SHA-256 before loading it. The additional
+`/seed-fault <description>` skill records a controlled mutation, red tests,
+hook evidence, and restoration. The original `/new-feature` skill remains
+available.

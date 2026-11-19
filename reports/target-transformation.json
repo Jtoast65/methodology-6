@@ -1,0 +1,28 @@
+{
+  "transformation": "cnt - cnt_lag_1",
+  "features": [
+    "temp",
+    "atemp",
+    "hum",
+    "windspeed",
+    "dayofweek",
+    "is_weekend",
+    "is_holiday",
+    "is_workday",
+    "month_sin",
+    "month_cos",
+    "weather_severity",
+    "cnt_lag_1",
+    "cnt_lag_7",
+    "cnt_roll_7",
+    "temp_demand_lag_1"
+  ],
+  "valid": {
+    "r2": 0.6329,
+    "mae": 784.7
+  },
+  "test": {
+    "r2": 0.5619,
+    "mae": 891.2
+  }
+}

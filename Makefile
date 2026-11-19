@@ -11,6 +11,7 @@ features:
 
 train:
 	python -m src.train
+	python -m src.train --target-change
 
 test:
 	python -m pytest tests/ -q
@@ -26,7 +27,10 @@ BASE ?= qwen3.5:9b
 
 model:
 	ollama pull $(BASE)
-	sed "s|^FROM .*|FROM $(BASE)|" model/Modelfile | ollama create bikeshare-coder -f -
+	@model_file=$$(mktemp); \
+	trap 'rm -f "$$model_file"' EXIT; \
+	sed "s|^FROM .*|FROM $(BASE)|" model/Modelfile > "$$model_file"; \
+	ollama create bikeshare-coder -f "$$model_file"
 
 check-model:
 	bash model/check.sh

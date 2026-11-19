@@ -158,6 +158,7 @@ async def audit_repo(repo: Path) -> dict[str, Any]:
         # but has no Edit or Write to grant.
         permission_mode="default",
         max_turns=40,
+        setting_sources=["project", "local"],
         model=os.environ.get("AUDIT_MODEL", "bikeshare-coder"),
         output_format={"type": "json_schema", "schema": REPORT_SCHEMA},
     )
@@ -195,7 +196,11 @@ async def main() -> None:
 
     async def bounded(repo: Path) -> dict[str, Any]:
         async with sem:
-            return await audit_repo(repo)
+            try:
+                return await audit_repo(repo.resolve())
+            except Exception as error:
+                return {"repo": repo.name, "error": "run_failed",
+                        "detail": f"{type(error).__name__}: {error}"[:500]}
 
     results = await asyncio.gather(*(bounded(r) for r in ns.repos))
     with ns.out.open("w") as fh:

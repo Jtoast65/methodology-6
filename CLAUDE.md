@@ -39,3 +39,8 @@ rides) from calendar, weather, and lagged-demand features.
   cannot extrapolate to 2012. That is the headline result, not an error.
 - 2012-10-29 (Hurricane Sandy, 22 rides) is in the test set. Expect it in
   any residual plot.
+- The tested temperature-demand interaction uses yesterday's inputs only.
+  Keep it excluded via EXPERIMENTAL_FEATURES; ridge validation R² fell.
+- Use /seed-fault <description> for controlled fault evidence and restoration.
+- make data checks the raw CSV hash. Restore exact original bytes after faults.
+- make all reproduces the main comparison and the separate target-change study.

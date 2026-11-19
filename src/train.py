@@ -15,10 +15,11 @@ reason it fails is the headline result.
 
 Run: python -m src.train
 """
+import argparse
 import json
 
 import pandas as pd
-from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.base import BaseEstimator, RegressorMixin, clone
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import Ridge
@@ -62,6 +63,20 @@ def temporal_split(df: pd.DataFrame):
     return train, valid, test
 
 
+def score_models(train, valid, test, cols: list[str]) -> dict:
+    results = {}
+    for name, estimator in MODELS.items():
+        model = clone(estimator).fit(train[cols], train[TARGET])
+        results[name] = {
+            split: {
+                "r2": round(float(r2_score(part[TARGET], model.predict(part[cols]))), 4),
+                "mae": round(float(mean_absolute_error(part[TARGET], model.predict(part[cols]))), 1),
+            }
+            for split, part in [("valid", valid), ("test", test)]
+        }
+    return results
+
+
 def fit_and_score() -> dict:
     df = pd.read_parquet(PROCESSED)
     cols = feature_columns(df)
@@ -74,20 +89,42 @@ def fit_and_score() -> dict:
         "n_valid": len(valid),
         "n_test": len(test),
     }
-    for name, model in MODELS.items():
-        model.fit(train[cols], train[TARGET])
-        results[name] = {
-            split: {
-                "r2": round(float(r2_score(part[TARGET], model.predict(part[cols]))), 4),
-                "mae": round(float(mean_absolute_error(part[TARGET], model.predict(part[cols]))), 1),
-            }
-            for split, part in [("valid", valid), ("test", test)]
+    results.update(score_models(train, valid, test, cols))
+    candidate_cols = feature_columns(df, include_experimental=True)
+    results["feature_comparison"] = {
+        "feature": "temp_demand_lag_1",
+        "kept": False,
+        "selection_metric": "ridge validation r2",
+        "before": {name: results[name] for name in MODELS},
+        "after": score_models(train, valid, test, candidate_cols),
+    }
+    return results
+
+
+def target_change_scores() -> dict:
+    """Predict changes from yesterday, then reconstruct counts in ride units."""
+    df = pd.read_parquet(PROCESSED)
+    # Use the candidate feature set fixed during the validation experiment.
+    cols = feature_columns(df, include_experimental=True)
+    train, valid, test = temporal_split(df)
+    model = clone(MODELS["hgb"])
+    model.fit(train[cols], train[TARGET] - train["cnt_lag_1"])
+    results = {"transformation": "cnt - cnt_lag_1", "features": cols}
+    for split, part in [("valid", valid), ("test", test)]:
+        predictions = part["cnt_lag_1"] + model.predict(part[cols])
+        results[split] = {
+            "r2": round(float(r2_score(part[TARGET], predictions)), 4),
+            "mae": round(float(mean_absolute_error(part[TARGET], predictions)), 1),
         }
     return results
 
 
 if __name__ == "__main__":
-    res = fit_and_score()
-    METRICS.parent.mkdir(parents=True, exist_ok=True)
-    METRICS.write_text(json.dumps(res, indent=2))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--target-change", action="store_true")
+    args = parser.parse_args()
+    res = target_change_scores() if args.target_change else fit_and_score()
+    output = METRICS.with_name("target-transformation.json") if args.target_change else METRICS
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(res, indent=2) + "\n")
     print(json.dumps({k: v for k, v in res.items() if k != "features"}, indent=2))
