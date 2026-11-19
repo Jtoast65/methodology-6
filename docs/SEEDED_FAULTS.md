@@ -385,3 +385,33 @@ python -m pytest tests/ -q
 ..................                                                       [100%]
 18 passed in 2.65s
 ```
+
+## Live /seed-fault repetition
+
+On 2026-11-18, qwen3.5:9b via Claude Code invoked /seed-fault for the weather guard. It removed the guard with Edit. The following blocking-error attachment was captured from the actual Claude Code session 0b999367-1732-473e-8f2d-ec9bb03bf417. This was automatic hook feedback, rather than the payload replays above.
+
+```text
+[${CLAUDE_PROJECT_DIR}/.claude/hooks/check_leakage.sh]: Leakage tests failed after editing /Users/joeysandoval/Documents/Codex/2026-11-16/https-dsc-capstone-org-2026-27/outputs/bikeshare-open/src/features.py:
+.......F..                                                               [100%]
+=================================== FAILURES ===================================
+______________________ test_unknown_weather_labels_raise _______________________
+
+    def test_unknown_weather_labels_raise():
+>       with pytest.raises(ValueError, match="unmapped weather labels"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_leakage.py:70: Failed
+=========================== short test summary info ============================
+FAILED tests/test_leakage.py::test_unknown_weather_labels_raise - Failed: DID...
+1 failed, 9 passed in 1.13s
+```
+
+The next repair used one Edit call to restore the exact guard. The subsequent real pytest output was
+
+```text
+..........                                                               [100%]
+10 passed in 1.03s
+```
+
+Repair count was one Claude Code repair edit/turn for the code restoration. The model later made a malformed documentation Edit call missing file_path. Codex stopped that documentation attempt after the source had been restored and transcribed the actual hook attachment here.
